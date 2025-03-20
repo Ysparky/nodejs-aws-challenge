@@ -1,0 +1,199 @@
+service: nodejs-aws-challenge
+
+frameworkVersion: "4"
+
+build:
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap:
+      type: linked
+      setNodeOptions: true
+    external:
+      - "@aws-sdk/*"
+    packages: external
+
+plugins:
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  memorySize: 256
+  timeout: 6
+  stage: ${opt:stage, 'dev'}
+  apiGateway:
+    shouldStartNameWithService: true
+  environment:
+    WEATHER_API_KEY: ${env:WEATHER_API_KEY}
+    HISTORY_TABLE_NAME: ${sls:stage}-history-table
+    STORE_TABLE_NAME: ${sls:stage}-store-table
+    CACHE_TABLE_NAME: ${sls:stage}-cache-table
+    AWS_ACCOUNT_ID: ${env:AWS_ACCOUNT_ID}
+  tags:
+    Project: nodejs-aws-challenge
+    Environment: ${self:provider.stage}
+  tracing:
+    lambda: true
+    apiGateway: true
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: "arn:aws:logs:*:*:*"
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:Query
+          Resource:
+            - Fn::GetAtt: [StarWarsWeatherHistoryTable, Arn]
+            - Fn::Join: ['/', [Fn::GetAtt: [StarWarsWeatherHistoryTable, Arn], 'index/HistoryByTimestampIndex']]
+            - Fn::GetAtt: [StarWarsWeatherStoreTable, Arn]
+            - Fn::GetAtt: [StarWardsWeatherCacheTable, Arn]
+
+functions:
+  combined:
+    handler: src/handlers/combined.handler
+    events:
+      - http:
+          path: /fusionados
+          method: get
+
+  history:
+    handler: src/handlers/history.handler
+    events:
+      - http:
+          path: /historial
+          method: get
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  store:
+    handler: src/handlers/store.handler
+    events:
+      - http:
+          path: /almacenar
+          method: post
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+resources:
+  Resources:
+    StarWarsWeatherHistoryTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${sls:stage}-history-table
+        AttributeDefinitions:
+          - AttributeName: planetId
+            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: S
+          - AttributeName: gsiType
+            AttributeType: S
+        KeySchema:
+          - AttributeName: planetId
+            KeyType: HASH
+          - AttributeName: timestamp
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: HistoryByTimestampIndex
+            KeySchema:
+              - AttributeName: gsiType
+                KeyType: HASH
+              - AttributeName: timestamp
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    StarWarsWeatherStoreTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${sls:stage}-store-table
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: timestamp
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+
+    StarWardsWeatherCacheTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${sls:stage}-cache-table
+        AttributeDefinitions:
+          - AttributeName: cacheKey
+            AttributeType: S
+        KeySchema:
+          - AttributeName: cacheKey
+            KeyType: HASH
+        TimeToLiveSpecification:
+          Enabled: true
+          AttributeName: ttl
+        BillingMode: PAY_PER_REQUEST
+
+    UserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: ${self:service}-${sls:stage}
+        UsernameAttributes:
+          - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: true
+            RequireUppercase: true
+
+    UserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        UserPoolId: 
+          Ref: UserPool
+        ClientName: ${self:service}-${sls:stage}-client
+        GenerateSecret: false
+        ExplicitAuthFlows:
+          - ALLOW_USER_PASSWORD_AUTH
+          - ALLOW_USER_SRP_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+        PreventUserExistenceErrors: ENABLED
+
+    ApiGatewayAuthorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: ${self:service}-${sls:stage}-authorizer
+        Type: COGNITO_USER_POOLS
+        IdentitySource: method.request.header.Authorization
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ProviderARNs:
+          - Fn::GetAtt: [UserPool, Arn]
+
+  Outputs:
+    UserPoolId:
+      Value:
+        Ref: UserPool
+      Description: ID of the Cognito User Pool
+    UserPoolClientId:
+      Value:
+        Ref: UserPoolClient
+      Description: ID of the Cognito User Pool Client
+    Region:
+      Value: ${self:provider.region}
+      Description: Region where the User Pool is created

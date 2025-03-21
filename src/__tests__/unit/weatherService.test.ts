@@ -122,7 +122,8 @@ describe("WeatherService", () => {
 
     // Verify fetch was called with correct URL
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("q=Spain")
+      expect.stringContaining("q=Spain"),
+      expect.any(Object)
     );
 
     // Verify cache was updated

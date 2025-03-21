@@ -1,6 +1,19 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { BaseLogger } from "../utils/logger";
 
+// Mock AWS X-Ray SDK
+jest.mock("aws-xray-sdk", () => ({
+  captureAWSv3Client: jest.fn().mockImplementation((client) => client),
+  captureHTTPs: jest.fn().mockImplementation((module) => module),
+  getSegment: jest.fn().mockReturnValue({
+    addNewSubsegment: jest.fn().mockReturnValue({
+      addAnnotation: jest.fn(),
+      close: jest.fn(),
+      addError: jest.fn(),
+    }),
+  }),
+}));
+
 // Set environment variables for testing
 process.env.WEATHER_API_KEY = "test-api-key";
 process.env.HISTORY_TABLE_NAME = "test-history-table";

@@ -7,6 +7,7 @@ import {
 import { uuid } from "uuidv4";
 import { GetItemsResult, PlanetWeather } from "../types/planetWeather";
 import { BaseLogger } from "../utils/logger";
+import { createTracedDynamoDBClient } from "../utils/tracer";
 
 export class DynamoService {
   private readonly documentClient: DynamoDBDocumentClient;
@@ -14,7 +15,7 @@ export class DynamoService {
   private readonly logger = BaseLogger.logger("dynamo-service");
 
   constructor(tableName: string) {
-    this.documentClient = DynamoDBDocumentClient.from(new DynamoDBClient());
+    this.documentClient = createTracedDynamoDBClient();
     this.tableName = tableName;
     this.logger.info("Initialized DynamoService", { tableName });
   }

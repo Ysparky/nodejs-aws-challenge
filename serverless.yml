@@ -16,6 +16,7 @@ build:
 plugins:
   - serverless-auto-swagger
   - serverless-offline
+  - serverless-plugin-tracing
 
 custom:
   autoswagger:
@@ -47,9 +48,7 @@ provider:
   tags:
     Project: nodejs-aws-challenge
     Environment: ${self:provider.stage}
-  tracing:
-    lambda: true
-    apiGateway: true
+  tracing: true
   iam:
     role:
       statements:
@@ -59,6 +58,11 @@ provider:
             - logs:CreateLogStream
             - logs:PutLogEvents
           Resource: "arn:aws:logs:*:*:*"
+        - Effect: Allow
+          Action:
+            - xray:PutTraceSegments
+            - xray:PutTelemetryRecords
+          Resource: "*"
         - Effect: Allow
           Action:
             - dynamodb:PutItem

@@ -1,6 +1,7 @@
 import { CacheService } from "./cacheService";
 import { Country } from "../types/country";
 import { BaseLogger } from "../utils/logger";
+import { tracedFetch } from "../utils/tracer";
 import { getRandomCountry } from "../utils/utils";
 
 export class WeatherService {
@@ -31,14 +32,8 @@ export class WeatherService {
         attempt: retryCount + 1,
       });
 
-      const response = await fetch(
-        `${this.baseUrl}/weather?q=${countryName}&appid=${process.env.WEATHER_API_KEY}&units=metric`
-      );
-
-      if (response.status === 404) {
-        this.logger.error("Country not found", { country: countryName });
-        throw new Error(`Country ${countryName} not found`);
-      }
+      const url = `${this.baseUrl}/weather?q=${countryName}&appid=${process.env.WEATHER_API_KEY}&units=metric`;
+      const response = await tracedFetch(url);
 
       if (!response.ok) {
         this.logger.error("Weather API request failed", {

@@ -14,7 +14,20 @@ build:
     packages: external
 
 plugins:
+  - serverless-auto-swagger
   - serverless-offline
+
+custom:
+  autoswagger:
+    title: "API del Clima de los planetas de Star Wars"
+    apiType: "http"
+    generateSwaggerOnDeploy: true
+    typefiles: ["./src/types/api-types.d.ts"]
+    swaggerPath: "api-docs"
+    schemes:
+      - https
+    basePath: /${self:provider.stage}
+    apiKeyHeaders: []
 
 provider:
   name: aws
@@ -64,6 +77,20 @@ functions:
       - http:
           path: /fusionados
           method: get
+          cors: true
+          summary: "Obtener clima de un planeta aleatorio de Star Wars"
+          description: "Devuelve información del clima para un planeta aleatorio de Star Wars junto con un país de la Tierra que coincida"
+          responseData:
+            200:
+              description: "Successful response"
+              bodyType: "PlanetResponse"
+            400:
+              description: "Bad request"
+              bodyType: "ErrorResponse"
+            500:
+              description: "Internal server error"
+              bodyType: "ErrorResponse"
+          swaggerTags: ["Weather"]
 
   history:
     handler: src/handlers/history.handler
@@ -71,10 +98,29 @@ functions:
       - http:
           path: /historial
           method: get
+          cors: true
+          summary: "Obtener historial del clima"
+          description: "Devuelve el historial de registros del clima para los planetas de Star Wars"
           authorizer:
             type: COGNITO_USER_POOLS
             authorizerId:
               Ref: ApiGatewayAuthorizer
+          headerParameters:
+            Authorization:
+              required: true
+              type: string
+              description: "Token de autenticación de Cognito (Bearer token)"
+          responseData:
+            200:
+              description: "Successful response"
+              bodyType: "HistoryResponse"
+            401:
+              description: "Unauthorized"
+              bodyType: "ErrorResponse"
+            500:
+              description: "Internal server error"
+              bodyType: "ErrorResponse"
+          swaggerTags: ["History"]
 
   store:
     handler: src/handlers/store.handler
@@ -82,10 +128,32 @@ functions:
       - http:
           path: /almacenar
           method: post
+          cors: true
+          summary: "Almacenar información del clima"
+          description: "Almacena cualquier objeto JSON válido en la base de datos"
           authorizer:
             type: COGNITO_USER_POOLS
             authorizerId:
               Ref: ApiGatewayAuthorizer
+          headerParameters:
+            Authorization:
+              required: true
+              type: string
+              description: "Token de autenticación de Cognito (Bearer token)"
+          responseData:
+            200:
+              description: "Successfully stored"
+              bodyType: "StoreResponse"
+            400:
+              description: "Bad request - Invalid JSON"
+              bodyType: "ErrorResponse"
+            401:
+              description: "Unauthorized"
+              bodyType: "ErrorResponse"
+            500:
+              description: "Internal server error"
+              bodyType: "ErrorResponse"
+          swaggerTags: ["Storage"]
 
 resources:
   Resources:

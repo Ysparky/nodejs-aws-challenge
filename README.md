@@ -10,6 +10,72 @@ This project is a serverless API that provides weather information for Star Wars
 - API documentation with Swagger
 - DynamoDB for data persistence
 - Request caching system
+- Advanced logging with CloudWatch
+- Request tracing with X-Ray
+
+## Technical Challenge Checklist
+
+### Core Requirements
+
+- [x] Node.js v20 with Serverless Framework/CDK
+- [x] TypeScript implementation
+- [x] AWS Lambda deployment
+- [x] DynamoDB for data storage
+- [x] API Gateway integration
+
+### API Integration
+
+- [x] Star Wars API (SWAPI) integration
+- [x] Weather API integration
+- [x] Data fusion between both APIs
+- [x] Data normalization (types, units)
+
+### Endpoints
+
+- [x] GET /fusionados - Combined data from both APIs
+- [x] POST /almacenar - Store custom data
+- [x] GET /historial - Retrieve stored history
+
+### Data Management
+
+- [x] DynamoDB tables setup
+- [x] Response caching (30-minute interval)
+- [x] Data normalization processing
+- [x] Chronological history storage
+
+### Security & Authentication
+
+- [x] Cognito User Pool configuration
+- [x] Protected endpoints (POST and GET /historial)
+- [x] JWT token implementation
+
+### Testing
+
+- [x] Jest unit tests
+- [x] Integration tests
+- [x] TypeScript type safety
+
+### Documentation
+
+- [x] Swagger/OpenAPI documentation
+- [x] API endpoint documentation
+- [x] Environment setup guide
+
+### AWS Optimizations
+
+- [x] Lambda cost optimization
+- [x] Memory/timeout configuration
+- [x] CloudWatch logging
+- [x] X-Ray tracing
+
+### Bonus Features
+
+- [x] AWS Cognito authentication
+- [x] Swagger/OpenAPI documentation
+- [x] Advanced logging with CloudWatch
+- [ ] Rate limiting for external APIs
+- [x] AWS X-Ray monitoring
+- [ ] Gherkin BDD tests
 
 ## Prerequisites
 

@@ -6,7 +6,6 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import * as dotenv from "dotenv";
 
-// Load environment variables from .env file
 dotenv.config();
 
 const generateToken = async (email: string, password: string) => {
@@ -44,7 +43,6 @@ const generateToken = async (email: string, password: string) => {
 };
 
 if (require.main === module) {
-  // Read email and password from .env
   const email = process.env.TEST_USER_EMAIL;
   const password = process.env.TEST_USER_PASSWORD;
 
@@ -60,7 +58,7 @@ if (require.main === module) {
       console.log("\nGenerated Tokens:\n");
       console.log(JSON.stringify(tokens, null, 2));
       console.log("\nUse the idToken in the Authorization header:\n");
-      console.log(`Bearer ${tokens.idToken}\n`);
+      console.log(tokens.idToken);
     })
     .catch((error) => {
       console.error("Error:", error);

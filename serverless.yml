@@ -44,7 +44,6 @@ provider:
     HISTORY_TABLE_NAME: ${sls:stage}-history-table
     STORE_TABLE_NAME: ${sls:stage}-store-table
     CACHE_TABLE_NAME: ${sls:stage}-cache-table
-    AWS_ACCOUNT_ID: ${env:AWS_ACCOUNT_ID}
   tags:
     Project: nodejs-aws-challenge
     Environment: ${self:provider.stage}
